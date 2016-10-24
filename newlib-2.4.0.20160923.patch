@@ -1,0 +1,15 @@
+diff -uprN newlib-2.4.0.20160923.old/newlib/libc/locale/locale.c newlib-2.4.0.20160923/newlib/libc/locale/locale.c
+--- newlib-2.4.0.20160923.old/newlib/libc/locale/locale.c	2016-09-08 20:36:32 +0900
++++ newlib-2.4.0.20160923/newlib/libc/locale/locale.c	2016-10-17 20:41:44 +0900
+@@ -996,7 +996,11 @@ __locale_ctype_ptr_l (struct __locale_t
+ const char *
+ __locale_ctype_ptr (void)
+ {
++#if 0
+   return __get_current_locale (_REENT)->ctype_ptr;
++#else
++  return _REENT->_locale ?: __get_global_locale ();
++#endif
+ }
+ 
+ #ifndef _REENT_ONLY
