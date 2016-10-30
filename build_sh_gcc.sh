@@ -112,7 +112,7 @@ if [ $SKIP_BINUTIL == 0 ]; then
     mkdir -p $BUILDDIR/$BINUTILSPKG
 
     cd $BUILDDIR/$BINUTILSPKG
-../../../src/$BINUTILSPKG/configure --prefix=$PREFIXDIR --target=$TARGET $HOST --disable-nls --disable-shared --enable-debug --disable-threads --with-gcc --with-gnu-as --with-gnu-ld --with-stabs --enable-interwork $MULTILIB 2>&1 | tee ${BINUTILSPKG}_configure.log
+    LDFLAGS=-static ../../../src/$BINUTILSPKG/configure --prefix=$PREFIXDIR --target=$TARGET $HOST --disable-nls --disable-shared --enable-debug --disable-threads --with-gcc --with-gnu-as --with-gnu-ld --with-stabs --enable-interwork $MULTILIB 2>&1 | tee ${BINUTILSPKG}_configure.log
 
     make 2>&1 | tee ${BINUTILSPKG}_make.log
     make install 2>&1 | tee ${BINUTILSPKG}_install.log
@@ -137,7 +137,7 @@ if [ $SKIP_GCC1 == 0 ]; then
 
     #unset CT_CC_GCC_ENABLE_TARGET_OPTSPACE
     cd $BUILDDIR/$GCCPKG
-../../../src/$GCCPKG/configure --enable-languages=c,c++ --with-newlib --disable-shared --disable-nls --enable-interwork --disable-thread  --disable-libgfortran -without-headers --disable-libssp --disable-libstdcxx-pch --target=$TARGET --prefix=$PREFIXDIR $HOST -v 2>&1 | tee ${GCCPKG}-all_configure.log
+    LDFLAGS=-static ../../../src/$GCCPKG/configure --enable-languages=c,c++ --with-newlib --disable-shared --disable-nls --enable-interwork --disable-thread  --disable-libgfortran -without-headers --disable-libssp --disable-libstdcxx-pch --target=$TARGET --prefix=$PREFIXDIR $HOST -v 2>&1 | tee ${GCCPKG}-all_configure.log
 
     make all-gcc 2>&1 | tee ${GCCPKG}-all_make.log
     make install-gcc 2>&1 | tee ${GCCPKG}-all_install.log
@@ -194,7 +194,7 @@ if [ $SKIP_GDB == 0 ]; then
     mkdir -p $BUILDDIR/$GDBPKG
 
     cd $BUILDDIR/$GDBPKG
-    ../../../src/$GDBPKG/configure --prefix=$PREFIXDIR --target=$TARGET $HOST --disable-shared --disable-nls 2>&1 | tee ${GDBPKG}_configure.log
+    LDFLAGS=-static ../../../src/$GDBPKG/configure --prefix=$PREFIXDIR --target=$TARGET $HOST --disable-shared --disable-nls 2>&1 | tee ${GDBPKG}_configure.log
 
     make 2>&1 | tee ${GDBPKG}_make.log
     make install 2>&1 | tee ${GDBPKG}_install.log
