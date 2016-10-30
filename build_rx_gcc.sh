@@ -6,7 +6,8 @@ SKIP_GCC1=0
 SKIP_NEWLIB=0
 SKIP_GCC2=0
 SKIP_GDB=0
-CREATE_MULTILIB=0
+CREATE_MULTILIB=1
+TARGET_WIN=0		# Set 1 for canadian cross compile
 
 #---------------------------------------------------------------------------------
 # Check OS
@@ -16,7 +17,21 @@ if [ "$(uname)" == 'Darwin' ]; then
     OS='Mac'
 elif [ "$(expr substr $(uname -s) 1 5)" == 'Linux' ]; then
     OS='Linux'
-elif [ "$(expr substr $(uname -s) 1 10)" == 'MINGW32_NT' ]; then                                                                                           
+    BUILD='x86_64-unknown-linux-gnu'
+    if [ "$TARGET_WIN" == '1' ]; then
+        HOST='--host=x86_64-w64-mingw32'
+        TPRI='-win'
+    else
+        HOST='--host=x86_64-unknown-linux-gnu'
+        TPRI=''
+    fi
+elif [ "$(expr substr $(uname -s) 1 10)" == 'MINGW32_NT' ]; then
+    OS='Mingw'
+elif [ "$(expr substr $(uname -s) 1 12)" == 'MSYS_NT-10.0' ]; then
+    OS='Mingw'
+elif [ "$(expr substr $(uname -s) 1 15)" == 'MINGW64_NT-10.0' ]; then
+    OS='Mingw'
+elif [ "$(expr substr $(uname -s) 1 15)" == 'NIMGW32_NT-10.0' ]; then
     OS='Mingw'
 else
     echo "OS ($(uname -a)) is not decided."
@@ -29,28 +44,33 @@ fi
 
 TARGET=rx-elf
 BINUTILSPKG=binutils-2.27
-GCCPKG=gcc-4.9.3
+#GCCPKG=gcc-4.9.3
+GCCPKG=gcc-4.9.4
 #NEWLIBPKG=newlib-2.4.0.20160923
 NEWLIBPKG=newlib-2.3.0.20160226
 GDBPKG=gdb-7.12
+#GDBPKG=gdb-7.10
+#GDBPKG=gdb-7.8.1
+#GDBPKG=gdb-7.6.2 #bug
+#GDBPKG=gdb-7.7.1
 DEVDIR=$HOME/dev
 BUILDDIR=$DEVDIR/build/$TARGET
 SRCDIR=$DEVDIR/src
 if [ "$OS" == 'Mingw' ]; then
     if [ $CREATE_MULTILIB == 1 ]; then
-        PREFIXDIR=/c/cross/$GCCPKG-$TARGET-M
+        PREFIXDIR=/c/cross/$TARGET-$GCCPKG-m$TPRI
     else
-        PREFIXDIR=/c/cross/$GCCPKG-$TARGET
+        PREFIXDIR=/c/cross/$TARGET-$GCCPKG$TPR
     fi
 else
     if [ $CREATE_MULTILIB == 1 ]; then
-        PREFIXDIR=/opt/$GCCPKG-$TARGET-M
+        PREFIXDIR=/opt/$TARGET-$GCCPKG-m$TRPI
     else
-        PREFIXDIR=/opt/$GCCPKG-$TARGET
+        PREFIXDIR=/opt/$TARGET-$GCCPKG$TPRI
     fi
 fi
 if [ $CREATE_MULTILIB == 1 ]; then
-    MULTILIB='--enable-multilib'
+    MULTILIB='--enable-multilib --disable-libquadmath'
 else
     MULTILIB='--disable-multilib'
 fi
@@ -58,14 +78,21 @@ NEWLIB_NANO='--enable-newlib-nano-malloc --enable-newlib-nano-formatted-io --ena
 
 mkdir -p $BUILDDIR
 mkdir -p $SRCDIR
-sudo mkdir -p $PREFIXDIR
-sudo chown $USER $PREFIXDIR
-chmod 755 $PREFIXDIR
+if [ "$OS" == 'Mingw' ]; then
+    mkdir -p $PREFIXDIR
+    #chown $USER $PREFIXDIR
+    #chmod 755 $PREFIXDIR
+else
+    sudo mkdir -p $PREFIXDIR
+    sudo chown $USER $PREFIXDIR
+    chmod 755 $PREFIXDIR
+fi
 
 #---------------------------------------------------------------------------------
 # set compiler flags
 #---------------------------------------------------------------------------------
 
+export LANG=C
 export CFLAGS='-O2 -pipe'
 export CXXFLAGS='-O2 -pipe'
 export LDFLAGS='-s'
@@ -85,7 +112,7 @@ if [ $SKIP_BINUTIL == 0 ]; then
     mkdir -p $BUILDDIR/$BINUTILSPKG
 
     cd $BUILDDIR/$BINUTILSPKG
-../../../src/$BINUTILSPKG/configure --prefix=$PREFIXDIR --target=$TARGET --disable-nls --disable-shared --enable-debug --disable-threads --with-gcc --with-gnu-as --with-gnu-ld --with-stabs --enable-interwork $MULTILIB 2>&1 | tee ${BINUTILSPKG}_configure.log
+../../../src/$BINUTILSPKG/configure --prefix=$PREFIXDIR --target=$TARGET $HOST --disable-nls --disable-shared --enable-debug --disable-threads --with-gcc --with-gnu-as --with-gnu-ld --with-stabs --enable-interwork $MULTILIB 2>&1 | tee ${BINUTILSPKG}_configure.log
 
     make 2>&1 | tee ${BINUTILSPKG}_make.log
     make install 2>&1 | tee ${BINUTILSPKG}_install.log
@@ -108,8 +135,9 @@ if [ $SKIP_GCC1 == 0 ]; then
     rm -rf $BUILDDIR/$GCCPKG/*
     mkdir -p $BUILDDIR/$GCCPKG
 
+    #unset CT_CC_GCC_ENABLE_TARGET_OPTSPACE
     cd $BUILDDIR/$GCCPKG
-../../../src/$GCCPKG/configure --enable-languages=c,c++ --with-newlib $MULTILIB --disable-shared --disable-nls --enable-lto --enable-interwork --disable-thread  --disable-libgfortran -without-headers --disable-libstdcxx-pch --target=$TARGET --prefix=$PREFIXDIR -v 2>&1 | tee ${GCCPKG}-all_configure.log
+../../../src/$GCCPKG/configure --enable-languages=c,c++ --with-newlib --disable-shared --disable-nls --enable-interwork --disable-thread  --disable-libgfortran -without-headers --disable-libssp --disable-libstdcxx-pch --target=$TARGET --prefix=$PREFIXDIR $HOST -v 2>&1 | tee ${GCCPKG}-all_configure.log
 
     make all-gcc 2>&1 | tee ${GCCPKG}-all_make.log
     make install-gcc 2>&1 | tee ${GCCPKG}-all_install.log
@@ -133,7 +161,7 @@ if [ $SKIP_NEWLIB == 0 ]; then
     mkdir -p $BUILDDIR/$NEWLIBPKG
 
     cd $BUILDDIR/$NEWLIBPKG
-    ../../../src/$NEWLIBPKG/configure --prefix=$PREFIXDIR --target=$TARGET $MULTILIB --disable-shared --disable-libquadmath --disable-libada --disable-libssp $NEWLIB_NANO 2>&1 | tee ${NEWLIBPKG}_configure.log
+    ../../../src/$NEWLIBPKG/configure --prefix=$PREFIXDIR --target=$TARGET $HOST $MULTILIB --disable-shared --disable-libquadmath --disable-libada --disable-libssp $NEWLIB_NANO 2>&1 | tee ${NEWLIBPKG}_configure.log
 
     make 2>&1 | tee ${NEWLIBPKG}_make.log
     make install 2>&1 | tee ${NEWLIBPKG}_install.log
@@ -146,7 +174,7 @@ fi
 if [ $SKIP_GCC2 == 0 ]; then
     cd $SRCDIR
     cd $BUILDDIR/$GCCPKG
-    ../../../$GCCPKG/configure --enable-languages=c,c++ --with-newlib $MULTILIB --disable-shared --disable-nls --enable-lto --enable-interwork --disable-thread --disable-libgfortran --target=$TARGET --prefix=$PREFIXDIR -v 2>&1 | tee ${GCCPKG}_configure.log
+    #../../../src/$GCCPKG/configure --enable-languages=c,c++ --with-newlib --disable-shared --disable-nls --enable-lto --enable-interwork --disable-thread --disable-libgfortran --target=$TARGET --prefix=$PREFIXDIR $HOST -v 2>&1 | tee ${GCCPKG}_configure.log
     make all 2>&1 | tee ${GCCPKG}_make.log
     make install 2>&1 | tee ${GCCPKG}_install.log
 fi
@@ -166,7 +194,7 @@ if [ $SKIP_GDB == 0 ]; then
     mkdir -p $BUILDDIR/$GDBPKG
 
     cd $BUILDDIR/$GDBPKG
-    ../../../src/$GDBPKG/configure --prefix=$PREFIXDIR --target=$TARGET --disable-shared --disable-nls 2>&1 | tee ${GDBPKG}_configure.log
+    ../../../src/$GDBPKG/configure --prefix=$PREFIXDIR --target=$TARGET $HOST --disable-shared --disable-nls 2>&1 | tee ${GDBPKG}_configure.log
 
     make 2>&1 | tee ${GDBPKG}_make.log
     make install 2>&1 | tee ${GDBPKG}_install.log
