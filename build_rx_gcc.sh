@@ -33,10 +33,15 @@ TARGET_WIN=0		# Set 1 for canadian cross compile (doesn't work)
 # default parameters
 #---------------------------------------------------------------------------------
 
-DEFAULT_BINUTILSPKG=binutils-2.31
-DEFAULT_GCCPKG=gcc-4.9.4
-DEFAULT_NEWLIBPKG=newlib-3.0.0.20180831
-DEFAULT_GDBPKG=gdb-8.1.1
+#DEFAULT_BINUTILSPKG=binutils-2.31
+#DEFAULT_GCCPKG=gcc-4.9.4
+#DEFAULT_NEWLIBPKG=newlib-3.0.0.20180831
+#DEFAULT_GDBPKG=gdb-8.1.1
+
+DEFAULT_BINUTILSPKG=binutils-2.34
+DEFAULT_GCCPKG=gcc-9.3.0
+DEFAULT_NEWLIBPKG=newlib-3.3.0
+DEFAULT_GDBPKG=gdb-9.2
 
 DEFAULT_DEV_DIR=$PWD
 DEFAULT_INSTALL_DIR_WIN='/c/cross'
@@ -201,7 +206,9 @@ if [ $SKIP_GCC1 == 0 ]; then
 
     #unset CT_CC_GCC_ENABLE_TARGET_OPTSPACE
     cd $BUILD_DIR/$GCCPKG
-    LDFLAGS=-static ../../../src/$GCCPKG/configure --enable-languages=c,c++ --with-newlib --disable-shared --disable-nls --enable-interwork --disable-thread  --disable-libgfortran -without-headers --disable-libssp --disable-libstdcxx-pch --target=$TARGET --prefix=$PREFIXDIR $HOST -v 2>&1 | tee ${GCCPKG}-all_configure.log
+#    LDFLAGS=-static ../../../src/$GCCPKG/configure --enable-languages=c,c++ --with-newlib --disable-shared --disable-nls --enable-interwork --disable-thread  --without-headers --disable-libssp --disable-libstdcxx-pch --target=$TARGET --prefix=$PREFIXDIR $HOST -v 2>&1 | tee ${GCCPKG}-all_configure.log
+
+    LDFLAGS=-static ../../../src/$GCCPKG/configure -v --target=$TARGET --prefix=$PREFIXDIR $HOST --enable-languages=c,c++ --disable-shared --with-newlib --enable-lto --enable-gold --disable-libstdcxx-pch 2>&1 | tee ${GCCPKG}-all_configure.log    
     
     make $MAKE_MULTI all-gcc 2>&1 | tee ${GCCPKG}-all_make.log
     make install-gcc 2>&1 | tee ${GCCPKG}-all_install.log
@@ -237,8 +244,15 @@ fi
 #---------------------------------------------------------------------------------
 
 if [ $SKIP_GCC2 == 0 ]; then
+    rm -rf $BUILD_DIR/$GCCPKG/*
+    mkdir -p $BUILD_DIR/$GCCPKG
     cd $BUILD_DIR/$GCCPKG
     #../../../src/$GCCPKG/configure --enable-languages=c,c++ --with-newlib --disable-shared --disable-nls --enable-lto --enable-interwork --disable-thread --disable-libgfortran --target=$TARGET --prefix=$PREFIXDIR $HOST -v 2>&1 | tee ${GCCPKG}_configure.log
+
+    #LDFLAGS=-static ../../../src/$GCCPKG/configure --enable-languages=c,c++ --with-newlib --disable-shared --disable-nls --enable-interwork --disable-thread --without-headers --disable-libssp --disable-libstdcxx-pch --enable-lto --target=$TARGET --prefix=$PREFIXDIR $HOST -v 2>&1 | tee ${GCCPKG}-all_configure.log
+
+    LDFLAGS=-static ../../../src/$GCCPKG/configure -v --target=$TARGET --prefix=$PREFIXDIR $HOST --enable-languages=c,c++ --disable-shared --with-newlib --enable-lto --enable-gold --disable-libstdcxx-pch 2>&1 | tee ${GCCPKG}-all_configure.log
+    
     make $MAKE_MULTI all 2>&1 | tee ${GCCPKG}_make.log
     make install 2>&1 | tee ${GCCPKG}_install.log
 fi
