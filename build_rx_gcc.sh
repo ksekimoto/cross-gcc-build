@@ -208,7 +208,7 @@ if [ $SKIP_GCC1 == 0 ]; then
     cd $BUILD_DIR/$GCCPKG
 #    LDFLAGS=-static ../../../src/$GCCPKG/configure --enable-languages=c,c++ --with-newlib --disable-shared --disable-nls --enable-interwork --disable-thread  --without-headers --disable-libssp --disable-libstdcxx-pch --target=$TARGET --prefix=$PREFIXDIR $HOST -v 2>&1 | tee ${GCCPKG}-all_configure.log
 
-    LDFLAGS=-static ../../../src/$GCCPKG/configure -v --target=$TARGET --prefix=$PREFIXDIR $HOST --enable-languages=c,c++ --disable-shared --with-newlib --enable-lto --enable-gold --disable-libstdcxx-pch 2>&1 | tee ${GCCPKG}-all_configure.log    
+    LDFLAGS=-static ../../../src/$GCCPKG/configure -v --target=$TARGET --prefix=$PREFIXDIR $HOST --enable-languages=c,c++ --disable-shared --with-newlib --enable-lto --enable-gold --disable-libstdcxx-pch --disable-nls 2>&1 | tee ${GCCPKG}-all_configure.log    
     
     make $MAKE_MULTI all-gcc 2>&1 | tee ${GCCPKG}-all_make.log
     make install-gcc 2>&1 | tee ${GCCPKG}-all_install.log
@@ -251,7 +251,7 @@ if [ $SKIP_GCC2 == 0 ]; then
 
     #LDFLAGS=-static ../../../src/$GCCPKG/configure --enable-languages=c,c++ --with-newlib --disable-shared --disable-nls --enable-interwork --disable-thread --without-headers --disable-libssp --disable-libstdcxx-pch --enable-lto --target=$TARGET --prefix=$PREFIXDIR $HOST -v 2>&1 | tee ${GCCPKG}-all_configure.log
 
-    LDFLAGS=-static ../../../src/$GCCPKG/configure -v --target=$TARGET --prefix=$PREFIXDIR $HOST --enable-languages=c,c++ --disable-shared --with-newlib --enable-lto --enable-gold --disable-libstdcxx-pch 2>&1 | tee ${GCCPKG}-all_configure.log
+    LDFLAGS=-static ../../../src/$GCCPKG/configure -v --target=$TARGET --prefix=$PREFIXDIR $HOST --enable-languages=c,c++ --disable-shared --with-newlib --enable-lto --enable-gold --disable-libstdcxx-pch --disable-nls 2>&1 | tee ${GCCPKG}-all_configure.log
     
     make $MAKE_MULTI all 2>&1 | tee ${GCCPKG}_make.log
     make install 2>&1 | tee ${GCCPKG}_install.log
