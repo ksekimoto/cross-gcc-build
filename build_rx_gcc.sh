@@ -24,9 +24,9 @@ SKIP_GCC1=0         # skip gcc phase 1 build
 SKIP_NEWLIB=0       # skip newlib build
 SKIP_GCC2=0         # skip gcc phase 2 build
 SKIP_GDB=0          # skip gdb build
-CREATE_MULTILIB=1   # create multi-libraqry
+CREATE_MULTILIB=0   # create multi-libraqry
 SKIP_TAR=0          # skip tar archive
-TARGET_WIN=0		# Set 1 for canadian cross compile (doesn't work)
+TARGET_WIN=0        # Set 1 for canadian cross compile (doesn't work)
 #PASSWORD           # password for sudo to create under /opt
 
 #---------------------------------------------------------------------------------
@@ -38,10 +38,10 @@ TARGET_WIN=0		# Set 1 for canadian cross compile (doesn't work)
 #DEFAULT_NEWLIBPKG=newlib-3.0.0.20180831
 #DEFAULT_GDBPKG=gdb-8.1.1
 
-DEFAULT_BINUTILSPKG=binutils-2.34
-DEFAULT_GCCPKG=gcc-9.3.0
-DEFAULT_NEWLIBPKG=newlib-3.3.0
-DEFAULT_GDBPKG=gdb-9.2
+DEFAULT_BINUTILSPKG=binutils-2.35.1
+DEFAULT_GCCPKG=gcc-9.2.0
+DEFAULT_NEWLIBPKG=newlib-4.1.0
+DEFAULT_GDBPKG=gdb-10.1
 
 DEFAULT_DEV_DIR=$PWD
 DEFAULT_INSTALL_DIR_WIN='/c/cross'
@@ -208,7 +208,7 @@ if [ $SKIP_GCC1 == 0 ]; then
     cd $BUILD_DIR/$GCCPKG
 #    LDFLAGS=-static ../../../src/$GCCPKG/configure --enable-languages=c,c++ --with-newlib --disable-shared --disable-nls --enable-interwork --disable-thread  --without-headers --disable-libssp --disable-libstdcxx-pch --target=$TARGET --prefix=$PREFIXDIR $HOST -v 2>&1 | tee ${GCCPKG}-all_configure.log
 
-    LDFLAGS=-static ../../../src/$GCCPKG/configure -v --target=$TARGET --prefix=$PREFIXDIR $HOST --enable-languages=c,c++ --disable-shared --with-newlib --enable-lto --enable-gold --disable-libstdcxx-pch --disable-nls 2>&1 | tee ${GCCPKG}-all_configure.log    
+    LDFLAGS=-static ../../../src/$GCCPKG/configure -v --target=$TARGET --prefix=$PREFIXDIR $HOST --enable-languages=c --disable-shared --with-newlib --enable-lto --enable-gold --disable-libstdcxx-pch --disable-nls $MULTILIB 2>&1 | tee ${GCCPKG}-all_configure.log    
     
     make $MAKE_MULTI all-gcc 2>&1 | tee ${GCCPKG}-all_make.log
     make install-gcc 2>&1 | tee ${GCCPKG}-all_install.log
@@ -251,7 +251,7 @@ if [ $SKIP_GCC2 == 0 ]; then
 
     #LDFLAGS=-static ../../../src/$GCCPKG/configure --enable-languages=c,c++ --with-newlib --disable-shared --disable-nls --enable-interwork --disable-thread --without-headers --disable-libssp --disable-libstdcxx-pch --enable-lto --target=$TARGET --prefix=$PREFIXDIR $HOST -v 2>&1 | tee ${GCCPKG}-all_configure.log
 
-    LDFLAGS=-static ../../../src/$GCCPKG/configure -v --target=$TARGET --prefix=$PREFIXDIR $HOST --enable-languages=c,c++ --disable-shared --with-newlib --enable-lto --enable-gold --disable-libstdcxx-pch --disable-nls 2>&1 | tee ${GCCPKG}-all_configure.log
+    LDFLAGS=-static ../../../src/$GCCPKG/configure -v --target=$TARGET --prefix=$PREFIXDIR $HOST --enable-languages=c,c++ --disable-shared --with-newlib --enable-lto --enable-gold --disable-libstdcxx-pch --disable-nls $MULTILIB 2>&1 | tee ${GCCPKG}-all_configure.log
     
     make $MAKE_MULTI all 2>&1 | tee ${GCCPKG}_make.log
     make install 2>&1 | tee ${GCCPKG}_install.log
